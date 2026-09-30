@@ -1,0 +1,59 @@
+name: fetch-market-data
+
+on:
+  schedule:
+    # Two runs Mon-Fri (UTC). GitHub often starts scheduled jobs 30-60 min late, so:
+    #   20:40 UTC = 16:40 EDT (summer close + 40 min); in winter it is pre-close and the
+    #               running session is dropped, harmlessly.
+    #   21:40 UTC = 17:40 EDT / 16:40 EST: covers winter and backs up a late/failed first run.
+    # An unchanged market.json is not committed, so the duplicate run is free.
+    - cron: "40 20 * * 1-5"
+    - cron: "40 21 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-market-data
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch market data
+        id: fetch
+        run: |
+          rc=0
+          python fetch_market.py || rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+
+      - name: Commit data/market.json if changed
+        if: always()
+        run: |
+          if [ ! -f data/market.json ]; then
+            echo "data/market.json not written; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/market.json
+          if git diff --cached --quiet; then
+            echo "no change"
+          else
+            git commit -m "data: market $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Fail job if fetch failed
+        if: always() && steps.fetch.outputs.rc != '0'
+        run: |
+          echo "fetch_market.py exited with code '${{ steps.fetch.outputs.rc }}'"
+          exit 1
