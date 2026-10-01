@@ -74,7 +74,10 @@ def parse_yahoo_chart(j, now_ts=None, drop_running=True):
         reg = meta["currentTradingPeriod"]["regular"]
         now = now_ts if now_ts is not None else dt.datetime.now(dt.timezone.utc).timestamp()
         if reg["start"] <= now < reg["end"] and out:
-            today = dt.datetime.fromtimestamp(reg["start"], tz).date().isoformat()
+            # Date the running session by its END: futures sessions open the previous evening
+            # (e.g. Brent opens 18:00 ET on day D-1 for trade date D), so dating by start would
+            # wrongly drop day D-1's already-settled bar.
+            today = dt.datetime.fromtimestamp(reg["end"], tz).date().isoformat()
             if out[-1][0] == today:
                 out.pop()
     return out
