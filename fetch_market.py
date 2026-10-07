@@ -254,14 +254,83 @@ def load_config(path):
         return {}
 
 
+# Futures trade almost around the clock: the next session opens the evening the previous one
+# settles, so at fetch time they are always "running" and the drop-running rule would discard
+# the settled bar. The consumer (update_dash.py) filters by expected trading day anyway.
+NO_DROP_RUNNING = {"brent"}
+
+STOOQ = {"brent": "cb.f"}  # Stooq continuous-futures symbol, used when Yahoo lags a day
+
+
+def http_text(url, headers=None):
+    h = {"User-Agent": "Mozilla/5.0"}
+    h.update(headers or {})
+    req = urllib.request.Request(url, headers=h)
+    with urllib.request.urlopen(req, timeout=25) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def parse_stooq_csv(text):
+    """Stooq daily CSV (Date,Open,High,Low,Close,Volume) -> ascending [(YYYY-MM-DD, close)].
+
+    Anything that is not that CSV (e.g. "Exceeded the daily hits limit", an HTML page, "No data")
+    raises ValueError.
+    """
+    lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    if not lines:
+        raise ValueError("stooq: empty response")
+    head = [c.strip().lower() for c in lines[0].split(",")]
+    if "date" not in head or "close" not in head:
+        raise ValueError(f"stooq: not a CSV ({lines[0][:60]!r})")
+    di, ci = head.index("date"), head.index("close")
+    out = {}
+    for ln in lines[1:]:
+        cols = ln.split(",")
+        if len(cols) <= max(di, ci):
+            continue
+        try:
+            dt.date.fromisoformat(cols[di])
+            out[cols[di]] = round(float(cols[ci]), 4)
+        except ValueError:
+            continue
+    if not out:
+        raise ValueError("stooq: no data points")
+    return sorted(out.items())[-70:]
+
+
+def fetch_stooq(symbol):
+    """Stooq daily CSV -> ascending [(YYYY-MM-DD, close)]."""
+    return parse_stooq_csv(http_text(f"https://stooq.com/q/d/l/?s={urllib.request.quote(symbol)}&i=d"))
+
+
 def build_market(cfg, now_utc):
     errors = []
     series = {}
     for key, sym in YAHOO.items():
         try:
-            series[key] = {"symbol": sym, "points": [[d, v] for d, v in yahoo_chart(sym)]}
+            pts = yahoo_chart(sym, drop_running=key not in NO_DROP_RUNNING)
+            series[key] = {"symbol": sym, "points": [[d, v] for d, v in pts]}
         except Exception as e:
             errors.append(f"{key} ({sym}): {type(e).__name__}: {str(e)[:150]}")
+    # Brent fallback: if Yahoo's last Brent date is behind the equity series, splice the missing
+    # day(s) from Stooq onto Yahoo's series (append only; existing points are kept).
+    notes = []
+    ref = series.get("spx", {}).get("points") or []
+    for key, ssym in STOOQ.items():
+        cur = series.get(key, {}).get("points") or []
+        if ref and (not cur or cur[-1][0] < ref[-1][0]):
+            try:
+                alt = fetch_stooq(ssym)
+                last = cur[-1][0] if cur else ""
+                extra = [[d, v] for d, v in alt if d > last and d <= ref[-1][0]]
+                if extra:
+                    series[key] = {"symbol": series.get(key, {}).get("symbol", ssym),
+                                   "points": cur + extra, "spliced_from": f"stooq:{ssym}"}
+                    notes.append(f"{key}: Yahoo last {last or 'none'}; appended {len(extra)} day(s) from Stooq {ssym}")
+                else:
+                    notes.append(f"{key}: Yahoo last {last or 'none'}; Stooq had nothing newer")
+            except Exception as e:
+                notes.append(f"{key}: stooq fallback failed: {type(e).__name__}: {str(e)[:120]}")
     fg = None
     try:
         fg = {"points": [[d, v] for d, v in fetch_fg()]}
@@ -279,6 +348,7 @@ def build_market(cfg, now_utc):
         "fg": fg if fg is not None else {"points": []},
         "fedwatch": fedwatch,
         "errors": errors,
+        "notes": notes,  # informational only; update_dash ignores this field
     }
     return market
 
