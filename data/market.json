@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "fetched_at": "2026-10-14T23:25:59Z",
+ "fetched_at": "2026-10-15T00:03:24Z",
  "series": {
   "spx": {
    "symbol": "^GSPC",
@@ -1600,7 +1600,7 @@
     ],
     [
      "2026-10-14",
-     105.64
+     105.68
     ]
    ]
   },
@@ -2887,7 +2887,7 @@
   ]
  },
  "fedwatch": {
-  "asof": "2026-10-14",
+  "asof": "2026-10-15",
   "method": "30-day fed funds futures (ZQ), simplified CME method",
   "effr": 3.88,
   "range": [
@@ -2897,17 +2897,17 @@
   "meetings": [
    {
     "date": "2026-10-28",
-    "hike": 30.0,
-    "hold": 70.0,
+    "hike": 32.0,
+    "hold": 68.0,
     "cut": 0.0,
-    "implied_rate": 3.955
+    "implied_rate": 3.96
    },
    {
     "date": "2026-12-09",
-    "hike": 91.2,
-    "hold": 8.8,
+    "hike": 87.6,
+    "hold": 12.4,
     "cut": 0.0,
-    "implied_rate": 4.1734
+    "implied_rate": 4.1643
    }
   ]
  },
