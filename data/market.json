@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "fetched_at": "2026-10-19T23:55:01Z",
+ "fetched_at": "2026-10-20T00:36:44Z",
  "series": {
   "spx": {
    "symbol": "^GSPC",
@@ -1592,7 +1592,7 @@
     ],
     [
      "2026-10-19",
-     109.25
+     109.54
     ]
    ]
   },
@@ -2871,7 +2871,7 @@
   ]
  },
  "fedwatch": {
-  "asof": "2026-10-19",
+  "asof": "2026-10-20",
   "method": "30-day fed funds futures (ZQ), simplified CME method",
   "effr": 3.88,
   "range": [
