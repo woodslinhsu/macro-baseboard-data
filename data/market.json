@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "fetched_at": "2026-10-27T00:04:04Z",
+ "fetched_at": "2026-10-27T00:45:31Z",
  "series": {
   "spx": {
    "symbol": "^GSPC",
@@ -1592,7 +1592,7 @@
     ],
     [
      "2026-10-26",
-     110.48
+     110.08
     ]
    ]
   },
@@ -2881,17 +2881,17 @@
   "meetings": [
    {
     "date": "2026-10-28",
-    "hike": 10.0,
-    "hold": 90.0,
+    "hike": 12.0,
+    "hold": 88.0,
     "cut": 0.0,
-    "implied_rate": 3.905
+    "implied_rate": 3.91
    },
    {
     "date": "2026-12-09",
-    "hike": 83.6,
-    "hold": 16.4,
+    "hike": 81.4,
+    "hold": 18.6,
     "cut": 0.0,
-    "implied_rate": 4.1093
+    "implied_rate": 4.1073
    }
   ]
  },
