@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "fetched_at": "2026-11-07T00:18:16Z",
+ "fetched_at": "2026-11-07T01:08:59Z",
  "series": {
   "spx": {
    "symbol": "^GSPC",
@@ -2882,9 +2882,24 @@
    ]
   ]
  },
- "fedwatch": null,
- "errors": [
-  "fedwatch: EFFR fetch failed (JSONDecodeError: Expecting value: line 1 column 1 (char 0))"
- ],
+ "fedwatch": {
+  "asof": "2026-11-07",
+  "method": "30-day fed funds futures (ZQ), simplified CME method",
+  "effr": 3.88,
+  "range": [
+   3.75,
+   4.0
+  ],
+  "meetings": [
+   {
+    "date": "2026-12-09",
+    "hike": 76.1,
+    "hold": 23.9,
+    "cut": 0.0,
+    "implied_rate": 4.0702
+   }
+  ]
+ },
+ "errors": [],
  "notes": []
 }
